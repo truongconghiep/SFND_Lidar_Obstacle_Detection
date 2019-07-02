@@ -52,8 +52,8 @@ typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::FilterCloud(
 
     // remove points on the roof of the car
     pcl::CropBox<PointT> roof(true);
-    roof.setMin(Eigen::Vector4f (-1.5, -1.7, -1, 1));
-    roof.setMax(Eigen::Vector4f (2.6, 1.7, -.4, 1));
+    roof.setMin(Eigen::Vector4f (-2, -2, -2, 1));
+    roof.setMax(Eigen::Vector4f (2, 2.8, 2, 1));
     roof.setInputCloud(cloudRegion);
     roof.filter(indices);
 
@@ -67,8 +67,6 @@ typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::FilterCloud(
     extract.setNegative(true);
     extract.filter(*cloudRegion);
     
-
-
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     std::cout << "filtering took " << elapsedTime.count() << " milliseconds" << std::endl;
