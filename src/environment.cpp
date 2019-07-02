@@ -93,13 +93,17 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer)
     ProcessPointClouds<pcl::PointXYZI>* pointProcessorI = new ProcessPointClouds<pcl::PointXYZI>();
     pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloud = pointProcessorI->loadPcd("../src/sensors/data/pcd/data_1/0000000000.pcd");
     
-    pcl::PointCloud<pcl::PointXYZI>::Ptr filterCloud = pointProcessorI->FilterCloud(inputCloud, 0.5 , 
-                                                                                    Eigen::Vector4f (-20, -20, -10, 1), 
-                                                                                    Eigen::Vector4f ( 20, 20, 10, 1));
-                                                                                    
-    renderPointCloud(viewer,filterCloud,"filterCloud");
-    
+    /*--------------------------------FILTERING---------------------------------- */
+    pcl::PointCloud<pcl::PointXYZI>::Ptr filterCloud = pointProcessorI->FilterCloud(inputCloud, 0.2 , 
+                                                                                    Eigen::Vector4f (-20, -20, -6, 1), 
+                                                                                    Eigen::Vector4f ( 20, 20, 8, 1));                           
+    //renderPointCloud(viewer,filterCloud,"filterCloud");
     //renderPointCloud(viewer, inputCloud, "inputCloud");
+
+    /*--------------------------------SEGMENTATION------------------------------- */
+    std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud = pointProcessorI->SegmentPlane(filterCloud, 100, 0.2);
+    renderPointCloud(viewer, segmentCloud.first, "obstCloud", Color(1,0,0));
+    renderPointCloud(viewer, segmentCloud.second, "planeCloud", Color(0,1,0));
 }
 
 
