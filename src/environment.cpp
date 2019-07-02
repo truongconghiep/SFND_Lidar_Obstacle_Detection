@@ -103,13 +103,13 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer)
     /*--------------------------------------SEGMENTATION--------------------------------- */
     std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud = pointProcessorI->SegmentPlane(filterCloud, 100, 0.2);
     //renderPointCloud(viewer, segmentCloud.first, "obstCloud", Color(1,0,0));
-    //renderPointCloud(viewer, segmentCloud.second, "planeCloud", Color(0,1,0));
+    renderPointCloud(viewer, segmentCloud.second, "planeCloud", Color(0,1,0));
 
     /*------------------------------CLUSTERING THE OBSTACLE CLOUD-------------------------*/
     
     int clusterId = 0;
     std::vector<Color> colors = {Color(1,0,0), Color(0,1,0), Color(0,0,1), Color(1,1,0), Color(0,1,1), Color(1,0,1), Color(1,1,1)};
-    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessorI->Clustering(segmentCloud.first, 0.5, 100, 5000);
+    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessorI->Clustering(segmentCloud.first, 0.3, 70, 5000);
     bool render_clusters = true;
     bool render_box = false;
 
@@ -130,7 +130,7 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer)
 
         ++clusterId;
     }
-    renderPointCloud(viewer, segmentCloud.second, "planeCloud");
+    //renderPointCloud(viewer, segmentCloud.second, "planeCloud");
 }
 
 
