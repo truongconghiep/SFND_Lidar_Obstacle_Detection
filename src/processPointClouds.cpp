@@ -1,6 +1,7 @@
 // PCL lib Functions for processing point clouds 
 
 #include "processPointClouds.h"
+#define USING_PLC_LIB 0
 
 
 //constructor:
@@ -98,6 +99,72 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
   return segResult;
 }
 
+template<typename PointT>
+std::unordered_set<int> ProcessPointClouds<PointT>::Ransac3D(typename pcl::PointCloud<PointT>::Ptr& cloud, 
+int maxIterations, float distanceTol)
+{
+	std::unordered_set<int> inliersResult;
+	srand(time(NULL));
+	
+	while (maxIterations--)
+	{
+        std::unordered_set<int> inliers;
+        int counter = 0;
+        float x[3], y[3], z[3];
+		while(inliers.size() < 3)
+		{
+            int index = rand()%(cloud->points.size());
+            //int index = dis(gen);
+            if (0 == inliers.count(index))
+            {
+                inliers.insert(index);
+                x[counter] = cloud->points[index].x;
+                y[counter] = cloud->points[index].y;
+                z[counter] = cloud->points[index].z;
+                counter++;
+            }
+		}
+
+        float a, b, c, d, d1;
+    
+        // Two vectors defined by 3 points, which determines a plan
+        float vec0[3] = {x[1] - x[0], y[1] - y[0], z[1] - z[0]};
+        float vec1[3] = {x[2] - x[0], y[2] - y[0], z[2] - z[0]};
+        // Cross product 
+        a = vec0[1] * vec1[2] - vec0[2] * vec1[1];
+        b = vec0[2] * vec1[0] - vec0[0] * vec1[2];
+        c = vec0[0] * vec1[1] - vec0[1] * vec1[0];
+        d = -(a * x[0] + b * y[0] + c * z[0]);
+        d1 = sqrt(a*a + b*b + c*c);
+
+		for(int index = 0; index < cloud->points.size(); index++)
+		{
+            // avoid the chosen points above
+			if(inliers.count(index) > 0)
+				continue;
+
+			auto point = cloud->points[index];
+			float x = point.x;
+			float y = point.y;
+            float z = point.z;
+
+			float dis = fabs(a*x + b*y + c*z + d) / d1;
+
+			if(dis <= distanceTol)
+            {
+				inliers.insert(index);
+            }
+		}
+        
+		if(inliers.size()>inliersResult.size())
+		{
+			inliersResult = inliers;
+		}
+	}
+	
+	return inliersResult;
+}
+
 
 template<typename PointT>
 std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::SegmentPlane(
@@ -105,6 +172,7 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 {
     // Time segmentation process
     auto startTime = std::chrono::steady_clock::now();
+#if USING_PLC_LIB
 	//pcl::PointIndices::Ptr inliers;
     // TODO:: Fill in this function to find inliers for the cloud.
     pcl::SACSegmentation<PointT> seg;
@@ -120,6 +188,14 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
     // Segment the largest planar component from the input cloud
     seg.setInputCloud(cloud);
     seg.segment(*inliers, *coefficients);
+#else
+    std::unordered_set<int> inliers_Ran = Ransac3D(cloud, maxIterations, distanceThreshold);
+    pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
+    for (auto i : inliers_Ran) 
+    {
+        inliers->indices.push_back(i);
+    }
+#endif
 
     if(inliers->indices.size() == 0)
     {

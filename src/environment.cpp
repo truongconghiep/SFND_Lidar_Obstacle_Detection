@@ -168,19 +168,18 @@ int main (int argc, char** argv)
     pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloudI;
     while (!viewer->wasStopped ())
     {
+        // Clear viewer
+        viewer->removeAllPointClouds();
+        viewer->removeAllShapes();
 
-    // Clear viewer
-    viewer->removeAllPointClouds();
-    viewer->removeAllShapes();
+        // Load pcd and run obstacle detection process
+        inputCloudI = pointProcessorI->loadPcd((*streamIterator).string());
+        cityBlock(viewer, pointProcessorI, inputCloudI);
 
-    // Load pcd and run obstacle detection process
-    inputCloudI = pointProcessorI->loadPcd((*streamIterator).string());
-    cityBlock(viewer, pointProcessorI, inputCloudI);
+        streamIterator++;
+        if(streamIterator == stream.end())
+            streamIterator = stream.begin();
 
-    streamIterator++;
-    if(streamIterator == stream.end())
-        streamIterator = stream.begin();
-
-    viewer->spinOnce ();
+        viewer->spinOnce ();
     }
 }
