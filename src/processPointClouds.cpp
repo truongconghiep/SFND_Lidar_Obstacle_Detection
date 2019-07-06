@@ -1,6 +1,10 @@
 // PCL lib Functions for processing point clouds 
 
 #include "processPointClouds.h"
+#include "cluster.h"
+#include "kdtree.h"
+#include <chrono>
+#include <string>
 #define USING_PLC_LIB 0
 
 
@@ -219,12 +223,11 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::C
                             int minSize,   // minimum number of points
                             int maxSize)   // maximum number of points
 {
-
     // Time clustering process
     auto startTime = std::chrono::steady_clock::now();
 
     std::vector<typename pcl::PointCloud<PointT>::Ptr> clusters;
-
+#if USING_PLC_LIB
     // TODO:: Fill in the function to perform euclidean clustering to group detected obstacles
 
     // Creating the KdTree object for the search method of the extraction
@@ -253,6 +256,35 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::C
 
         clusters.push_back(cloudCluster);
     }
+#else
+    KdTree* tree = new KdTree;
+
+    std::vector<std::vector<float>> points;
+
+    for (int i=0; i<cloud->points.size(); i++) 
+    {
+        std::vector<float> point;
+        point.push_back(cloud->points[i].x);
+        point.push_back( cloud->points[i].y);
+        points.push_back(point);
+    	tree->insert(point,i); 
+    }
+    
+    std::vector<std::vector<int>> clusters1 = euclideanCluster(points, tree, 0.5);
+    for(std::vector<int> ClusterIndice: clusters1)
+    {
+        typename pcl::PointCloud<PointT>::Ptr cloudCluster (new pcl::PointCloud<PointT>);
+
+        for(int index : ClusterIndice)
+            cloudCluster->points.push_back (cloud->points[index]);
+        
+        cloudCluster->width = cloudCluster->points.size();
+        cloudCluster->height = 1;
+        cloudCluster->is_dense = true;
+
+        clusters.push_back(cloudCluster);
+    }
+#endif
 
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
